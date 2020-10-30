@@ -18,6 +18,7 @@
 #import "TZLocationManager.h"
 #import <MobileCoreServices/MobileCoreServices.h>
 #import "TZImageRequestOperation.h"
+#import <PhotosUI/PHPhotoLibrary+PhotosUISupport.h>
 
 @interface TZPhotoPickerController ()<UICollectionViewDataSource,UICollectionViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate, PHPhotoLibraryChangeObserver> {
     NSMutableArray *_models;
@@ -25,6 +26,7 @@
     UIView *_bottomToolBar;
     UIButton *_previewButton;
     UIButton *_doneButton;
+    UIButton *_morePhotosButton;
     UIImageView *_numberImageView;
     UILabel *_numberLabel;
     UIButton *_originalPhotoButton;
@@ -122,7 +124,7 @@ static CGFloat itemMargin = 5;
                 self->_models = [NSMutableArray arrayWithArray:self->_model.models];
                 [self initSubviews];
             }];
-        } else if (self->_showTakePhotoBtn || self->_isFirstAppear || !self.model.models) {
+        } else if (self->_showTakePhotoBtn || self->_isFirstAppear || !self.model.models || self->_morePhotosButton) {
             [[TZImageManager manager] getAssetsFromFetchResult:self->_model.result completion:^(NSArray<TZAssetModel *> *models) {
                 self->_models = [NSMutableArray arrayWithArray:models];
                 [self initSubviews];
@@ -293,6 +295,17 @@ static CGFloat itemMargin = 5;
     [_doneButton setTitleColor:tzImagePickerVc.oKButtonTitleColorDisabled forState:UIControlStateDisabled];
     _doneButton.enabled = tzImagePickerVc.selectedModels.count || tzImagePickerVc.alwaysEnableDoneBtn;
     
+    
+    if (@available(iOS 14, *)) {
+        if ([PHPhotoLibrary authorizationStatusForAccessLevel:PHAccessLevelReadWrite] == PHAuthorizationStatusLimited) {
+            _morePhotosButton = [UIButton buttonWithType:UIButtonTypeCustom];
+            _morePhotosButton.titleLabel.font = [UIFont systemFontOfSize:16];
+            [_morePhotosButton addTarget:self action:@selector(morePhotosButtonClick) forControlEvents:UIControlEventTouchUpInside];
+            [_morePhotosButton setTitle:[NSBundle tz_localizedStringForKey:@"MorePhotos"] forState:UIControlStateNormal];
+            [_morePhotosButton setTitleColor:tzImagePickerVc.oKButtonTitleColorNormal forState:UIControlStateNormal];
+        }
+    }
+    
     _numberImageView = [[UIImageView alloc] initWithImage:tzImagePickerVc.photoNumberIconImage];
     _numberImageView.hidden = tzImagePickerVc.selectedModels.count <= 0;
     _numberImageView.clipsToBounds = YES;
@@ -327,6 +340,7 @@ static CGFloat itemMargin = 5;
     [_bottomToolBar addSubview:_divideLine];
     [_bottomToolBar addSubview:_previewButton];
     [_bottomToolBar addSubview:_doneButton];
+    [_bottomToolBar addSubview:_morePhotosButton];
     [_bottomToolBar addSubview:_numberImageView];
     [_bottomToolBar addSubview:_numberLabel];
     [_bottomToolBar addSubview:_originalPhotoButton];
@@ -336,6 +350,10 @@ static CGFloat itemMargin = 5;
     if (tzImagePickerVc.photoPickerPageUIConfigBlock) {
         tzImagePickerVc.photoPickerPageUIConfigBlock(_collectionView, _bottomToolBar, _previewButton, _originalPhotoButton, _originalPhotoLabel, _doneButton, _numberImageView, _numberLabel, _divideLine);
     }
+}
+
+- (void)morePhotosButtonClick {
+    [[PHPhotoLibrary sharedPhotoLibrary] presentLimitedLibraryPickerFromViewController:self];
 }
 
 #pragma mark - Layout
@@ -395,6 +413,7 @@ static CGFloat itemMargin = 5;
     _numberImageView.frame = CGRectMake(_doneButton.tz_left - 24 - 5, 13, 24, 24);
     _numberLabel.frame = _numberImageView.frame;
     _divideLine.frame = CGRectMake(0, 0, self.view.tz_width, 1);
+    _morePhotosButton.frame = CGRectMake(_doneButton.tz_left-80-10, 0, 80, 50);
     
     [TZImageManager manager].columnNumber = [TZImageManager manager].columnNumber;
     [TZImageManager manager].photoWidth = tzImagePickerVc.photoWidth;
