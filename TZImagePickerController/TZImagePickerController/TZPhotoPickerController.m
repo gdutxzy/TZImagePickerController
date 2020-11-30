@@ -413,7 +413,7 @@ static CGFloat itemMargin = 5;
     _numberImageView.frame = CGRectMake(_doneButton.tz_left - 24 - 5, 13, 24, 24);
     _numberLabel.frame = _numberImageView.frame;
     _divideLine.frame = CGRectMake(0, 0, self.view.tz_width, 1);
-    _morePhotosButton.frame = CGRectMake(_doneButton.tz_left-80-10, 0, 80, 50);
+    _morePhotosButton.frame = CGRectMake(_numberLabel.tz_left-80, 0, 80, 50);
     
     [TZImageManager manager].columnNumber = [TZImageManager manager].columnNumber;
     [TZImageManager manager].photoWidth = tzImagePickerVc.photoWidth;
